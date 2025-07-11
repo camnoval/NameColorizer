@@ -5,21 +5,32 @@ import random
 # --- Helper functions ---
 
 def name_to_colors(name):
-    """Convert name string to a list of colors using hash and character codes."""
+    """Generate context-aware pastel-friendly colors from a name."""
     name = name.strip().lower()
     colors = []
     seen = set()
-    for char in name:
+    prev_seed = 0
+
+    for i, char in enumerate(name):
         if char.isalpha() and char not in seen:
             seen.add(char)
-            # Use hash of character to generate a stable HSL color
-            h = (ord(char) * 13) % 360
-            s = 0.65
-            l = 0.55
-            r, g, b = colorsys.hls_to_rgb(h/360, l, s)
-            hex_color = '#%02x%02x%02x' % (int(r*255), int(g*255), int(b*255))
+
+            # Combine char with previous to get a contextual hash
+            char_code = ord(char)
+            combined_seed = (char_code * 37 + prev_seed * 13) % 1000
+            prev_seed = combined_seed  # update for next round
+
+            # Pastel HSL values
+            h = (combined_seed * 1.3) % 360
+            s = 0.45  # lower saturation = softer
+            l = 0.80  # high lightness = pastel
+
+            r, g, b = colorsys.hls_to_rgb(h / 360, l, s)
+            hex_color = '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
             colors.append((char.upper(), hex_color))
+
     return colors
+
 
 def get_color_traits(hue):
     if hue < 0.05 or hue > 0.95:
