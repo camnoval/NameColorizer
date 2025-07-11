@@ -1,10 +1,10 @@
 import streamlit as st
 import colorsys
 
-# --- Main: Deterministic, style-aware color mapping ---
+# --- Main: Deterministic, cohesive color mapping ---
 
 def name_to_colors(name):
-    """Generate varied stylized colors (pastel, neon, metallic, vivid) based on letter context."""
+    """Generate a stylized color palette (pastel/neon/metallic/vivid) for the full name."""
     name = name.strip().lower()
     colors = []
     seen = set()
@@ -18,14 +18,18 @@ def name_to_colors(name):
         """Generates a deterministic pseudo-random float between min and max from a seed."""
         return min_val + (seed_val % 1000) / 1000 * (max_val - min_val)
 
+    # Determine style from first letter
+    if not name:
+        return []
+
+    first_char_seed = ord(name[0]) * 37 % 10000
+    style = style_from_seed(first_char_seed)
+
     for char in name:
         if char.isalpha() and char not in seen:
             seen.add(char)
-
             seed = (ord(char) * 37 + prev_seed * 11) % 10000
             prev_seed = seed
-
-            style = style_from_seed(seed)
 
             # Deterministic saturation and lightness based on seed
             if style == "pastel":
@@ -45,7 +49,7 @@ def name_to_colors(name):
             r, g, b = colorsys.hls_to_rgb(h / 360, l, s)
             hex_color = '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
-            colors.append((char.upper(), hex_color, style))
+            colors.append((char.upper(), hex_color))
 
     return colors
 
@@ -82,14 +86,13 @@ if name_input:
     colors = name_to_colors(name_input)
     
     cols = st.columns(len(colors))
-    for i, (char, hex_color, style) in enumerate(colors):
+    for i, (char, hex_color) in enumerate(colors):
         with cols[i]:
             st.markdown(
                 f"<div style='text-align: center;'>"
                 f"<b>{char}</b><br>"
                 f"<div style='background-color:{hex_color}; width:60px; height:60px; border-radius:6px; margin:auto;'></div><br>"
-                f"<code>{hex_color}</code><br>"
-                f"<small>{style.title()}</small>"
+                f"<code>{hex_color}</code>"
                 f"</div>", 
                 unsafe_allow_html=True
             )
@@ -97,9 +100,8 @@ if name_input:
     st.markdown("---")
     st.markdown("### Your Name Aura:")
 
-    # Describe aura using traits from hues
     aura_traits = []
-    for _, hex_color, _ in colors:
+    for _, hex_color in colors:
         r = int(hex_color[1:3], 16)/255.0
         g = int(hex_color[3:5], 16)/255.0
         b = int(hex_color[5:7], 16)/255.0
