@@ -28,13 +28,38 @@ def name_to_colors(name):
     style_seed = ord(first_letter) * 37 % 10000
     style = style_from_seed(style_seed)
 
+def name_to_colors(name):
+    """Generate a consistent-style color palette for a name using only one fixed style."""
+    name = name.strip().lower()
+    colors = []
+    seen = set()
+
+    def style_from_seed(seed):
+        styles = ["pastel", "neon", "metallic", "vivid"]
+        return styles[seed % len(styles)]
+
+    def stable_uniform(min_val, max_val, seed_val):
+        return min_val + (seed_val % 1000) / 1000 * (max_val - min_val)
+
+    if not name:
+        return []
+
+    # Determine fixed style once from first alpha character
+    first_letter = next((char for char in name if char.isalpha()), None)
+    if not first_letter:
+        return []
+
+    style_seed = ord(first_letter) * 37
+    style = style_from_seed(style_seed)
+
     for char in name:
         if char.isalpha() and char not in seen:
             seen.add(char)
-            seed = (ord(char) * 37 + prev_seed * 11) % 10000
-            prev_seed = seed
 
-            # Apply the one fixed style to all characters
+            # Generate unique seed for this letter (not using previous letter!)
+            seed = ord(char) * 91
+
+            # Apply fixed style
             if style == "pastel":
                 s = stable_uniform(0.3, 0.5, seed)
                 l = stable_uniform(0.75, 0.9, seed)
@@ -55,6 +80,7 @@ def name_to_colors(name):
             colors.append((char.upper(), hex_color))
 
     return colors
+
 
 def get_color_traits(hue):
     """Assign descriptive traits based on hue group."""
