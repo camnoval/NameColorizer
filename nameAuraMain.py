@@ -4,7 +4,7 @@ import colorsys
 # --- Main: Deterministic, cohesive color mapping ---
 
 def name_to_colors(name):
-    """Generate a stylized color palette (pastel/neon/metallic/vivid) for the full name."""
+    """Generate a consistent-style color palette based on a name. Only one style is used per name."""
     name = name.strip().lower()
     colors = []
     seen = set()
@@ -15,15 +15,18 @@ def name_to_colors(name):
         return styles[seed % len(styles)]
 
     def stable_uniform(min_val, max_val, seed_val):
-        """Generates a deterministic pseudo-random float between min and max from a seed."""
         return min_val + (seed_val % 1000) / 1000 * (max_val - min_val)
 
-    # Determine style from first letter
     if not name:
         return []
 
-    first_char_seed = ord(name[0]) * 37 % 10000
-    style = style_from_seed(first_char_seed)
+    # Set style ONCE based on first valid letter
+    first_letter = next((char for char in name if char.isalpha()), None)
+    if not first_letter:
+        return []
+
+    style_seed = ord(first_letter) * 37 % 10000
+    style = style_from_seed(style_seed)
 
     for char in name:
         if char.isalpha() and char not in seen:
@@ -31,7 +34,7 @@ def name_to_colors(name):
             seed = (ord(char) * 37 + prev_seed * 11) % 10000
             prev_seed = seed
 
-            # Deterministic saturation and lightness based on seed
+            # Apply the one fixed style to all characters
             if style == "pastel":
                 s = stable_uniform(0.3, 0.5, seed)
                 l = stable_uniform(0.75, 0.9, seed)
@@ -96,6 +99,7 @@ if name_input:
                 f"</div>", 
                 unsafe_allow_html=True
             )
+
 
     st.markdown("---")
     st.markdown("### Your Name Aura:")
